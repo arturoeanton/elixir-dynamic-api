@@ -5,7 +5,12 @@ defmodule Routes.Base do
       use Plug.Router
 
       plug :match
-      plug(Plug.Parsers, parsers: [:json], json_decoder: Poison)
+      plug(
+        Plug.Parsers,
+        parsers: [:json],
+        json_decoder: Poison
+      )
+      plug :match
       plug :dispatch
 
       defp send(conn, code, data) when is_integer(code) do

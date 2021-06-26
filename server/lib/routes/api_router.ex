@@ -19,16 +19,28 @@ defmodule Routes.ApiRouter do
     send(conn, :ok, %{"id" => id, "title" => "Just been deleted"})
   end
 
-  get "/load/:name_proto" do
-    System.cmd("protoc", ["-I","priv/protos", "--elixir_out=plugins=grpc:./priv/lib/","priv/protos/#{name_proto}.proto"])
-    {_,content} = File.read("./priv/lib/#{name_proto}.pb.ex")
+  post "proto/run" do
+    package = conn.params["package"]
+    params_list = Enum.map(conn.params["params"], fn(x) -> "#{package}.#{x}" end)
+    url_server = conn.params["url_server"]
+    service = conn.params["service"]
+    method = conn.params["method"]
+    params = Enum.join params_list, ","
+    reply = conn.params["reply"]
+    code = """
+      {:ok, channel} = GRPC.Stub.connect("#{url_server}")
+      {:ok, reply} = channel |> #{package}.#{service}.Stub.#{method}(#{params})
+      %{#{reply}}
+    """
+
+    File.write "priv/protos/#{package}.proto", conn.params["proto"]
+    # export PATH=$PATH:/home/arturoanton/.mix/escripts
+    System.cmd("protoc", ["-I","priv/protos", "--elixir_out=plugins=grpc:./priv/lib/","priv/protos/#{package}.proto"])
+    {_,content} = File.read("./priv/lib/#{package}.pb.ex")
     Code.compiler_options(ignore_module_conflict: true)
     {_result, _binding} = Code.eval_string(content, file: __ENV__.file, line: __ENV__.line)
-    {_,dynamic} = File.read("./priv/dynamic/#{name_proto}.ex")
-    {result, _binding} = Code.eval_string(dynamic, [conn: conn, name_proto: name_proto,content: content], file: __ENV__.file, line: __ENV__.line)
-
+    {result, _binding} = Code.eval_string(code, [conn: conn], file: __ENV__.file, line: __ENV__.line)
     send(conn, 200, result)
-
   end
 
 end
