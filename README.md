@@ -19,3 +19,6 @@ Content-Type: application/json
 }
 
 ```
+
+cd server/
+mix run --no-halt
