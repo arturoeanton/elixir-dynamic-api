@@ -20,5 +20,9 @@ Content-Type: application/json
 
 ```
 
+# Run 
+
+``` 
 cd server/
 mix run --no-halt
+```
