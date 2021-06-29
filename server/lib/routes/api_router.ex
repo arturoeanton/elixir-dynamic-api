@@ -35,7 +35,7 @@ defmodule Routes.ApiRouter do
 
     File.write "priv/protos/#{package}.proto", conn.params["proto"]
     # export PATH=$PATH:/home/arturoanton/.mix/escripts
-    System.cmd("protoc", ["-I","priv/protos", "--elixir_out=plugins=grpc:./priv/lib/","priv/protos/#{package}.proto"])
+    System.cmd("protoc", ["-I","priv/protos", "--elixir_out=gen_descriptors=true,plugins=grpc:./priv/lib/","priv/protos/#{package}.proto"])
     {_,content} = File.read("./priv/lib/#{package}.pb.ex")
     Code.compiler_options(ignore_module_conflict: true)
     {_result, _binding} = Code.eval_string(content, file: __ENV__.file, line: __ENV__.line)
